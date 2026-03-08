@@ -409,6 +409,9 @@ export const useDawStore = create<DAWState>((set, get) => {
     if (updates.solo !== undefined) {
       audioEngine.updateTrackSolo(id, updates.solo);
     }
+    if (updates.phaseInverted !== undefined) {
+      audioEngine.updateTrackPhaseInvert(id, updates.phaseInverted);
+    }
   },
   updateTrackEffects: (id, updates) => {
     get().pushUndo();

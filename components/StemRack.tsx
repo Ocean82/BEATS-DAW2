@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useDawStore } from '../store/dawStore';
 import { cn } from '../utils/cn';
 import type { StemItem } from './SplitConsole';
@@ -118,16 +118,36 @@ function StemRack({ stems, selectedStemIds, onLoadToTracks }: StemRackProps) {
       const buf = await res.arrayBuffer();
       const decoded = await ctx.decodeAudioData(buf);
       setStemBuffers((prev) => ({ ...prev, [url]: decoded }));
+
+      // Apply trim
+      const trim = trimMap[url] ?? defaultTrim();
+      const fullDuration = decoded.duration;
+      const offsetSec = (trim.start / 100) * fullDuration;
+      const playDuration = ((trim.end - trim.start) / 100) * fullDuration;
+
       const source = ctx.createBufferSource();
       source.buffer = decoded;
       source.connect(ctx.destination);
       source.onended = () => setPlayingUrl(null);
       sourceRef.current = source;
-      source.start();
+      source.start(0, offsetSec, playDuration);
       setPlayingUrl(url);
     } catch {
       setPlayingUrl(null);
     }
+  };
+
+  const sliceBuffer = (buffer: AudioBuffer, ctx: AudioContext, startFraction: number, endFraction: number): AudioBuffer => {
+    const sampleRate = buffer.sampleRate;
+    const totalSamples = buffer.length;
+    const startSample = Math.floor(startFraction * totalSamples);
+    const endSample = Math.floor(endFraction * totalSamples);
+    const sliceLength = endSample - startSample;
+    const sliced = ctx.createBuffer(buffer.numberOfChannels, sliceLength, sampleRate);
+    for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+      sliced.copyToChannel(buffer.getChannelData(ch).slice(startSample, endSample), ch);
+    }
+    return sliced;
   };
 
   const handleLoadOne = async (stem: StemItem) => {
@@ -142,7 +162,33 @@ function StemRack({ stems, selectedStemIds, onLoadToTracks }: StemRackProps) {
     }
     const trackList = useDawStore.getState().tracks;
     const trackId = trackList[stemIndex]?.id;
-    if (trackId) await addAudioClipFromUrl(trackId, stem.url, stem.name);
+    if (!trackId) return;
+
+    // If we have a decoded buffer and a non-default trim, slice and load directly
+    const buffer = stemBuffers[stem.url];
+    const trim = trimMap[stem.url] ?? defaultTrim();
+    const hasTrim = trim.start > 0 || trim.end < 100;
+    if (buffer && hasTrim) {
+      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (Ctor) {
+        const ctx = new Ctor();
+        const sliced = sliceBuffer(buffer, ctx, trim.start / 100, trim.end / 100);
+        const { addClip } = useDawStore.getState();
+        const clipId = `clip-${Date.now()}-trimmed`;
+        addClip({
+          id: clipId,
+          trackId,
+          startBeat: 0,
+          durationBeats: sliced.duration * (useDawStore.getState().bpm / 60),
+          color: '#f43f5e',
+          name: stem.name,
+          audioBuffer: sliced,
+        });
+        return;
+      }
+    }
+
+    await addAudioClipFromUrl(trackId, stem.url, stem.name);
   };
 
   if (stems.length === 0) return null;

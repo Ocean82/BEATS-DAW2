@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { useDawStore } from '../store/dawStore';
 import { Volume2, Headphones, Mic, GitBranch, FlipHorizontal2, Circle } from 'lucide-react';
 import { cn } from '../utils/cn';
