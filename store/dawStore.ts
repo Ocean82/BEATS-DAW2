@@ -189,6 +189,7 @@ interface DAWState {
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
+  onBeat: (beat: number) => void;
 }
 
 const TRACK_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4'];
@@ -251,11 +252,15 @@ function applySnapshot(
     // mastering: snapshot.mastering,
     masteringBypass: snapshot.masteringBypass,
   });
-  // snapshot.tracks.forEach((s) => {
-  //   audioEngine.updateTrackGain(s.id, s.volume);
-  //   audioEngine.updateTrackPan(s.id, s.pan);
-  //   audioEngine.updateTrackPhaseInvert(s.id, s.phaseInverted);
-  // });
+  snapshot.tracks.forEach((s) => {
+    audioEngine.updateTrackVolume(s.id, s.volume);
+    audioEngine.updateTrackPan(s.id, s.pan);
+    audioEngine.updateTrackPhaseInvert(s.id, s.phaseInverted);
+    audioEngine.updateTrackEq(s.id, s.effects.eqLow, s.effects.eqMid, s.effects.eqHigh);
+    audioEngine.updateTrackReverbWet(s.id, s.effects.reverbWet);
+    audioEngine.updateTrackDelayWet(s.id, s.effects.delayWet);
+    audioEngine.updateTrackCompressor(s.id, s.effects.compThreshold, s.effects.compRatio);
+  });
 }
 
 const initialTracks = [
@@ -265,7 +270,13 @@ const initialTracks = [
 ];
 initialTracks.forEach(track => audioEngine.addTrack(track.id));
 
-export const useDawStore = create<DAWState>((set, get) => ({
+export const useDawStore = create<DAWState>((set, get) => {
+  // Register playhead RAF callback — fires every animation frame during playback
+  audioEngine.setOnBeatCallback((beat: number) => {
+    useDawStore.getState().onBeat(beat);
+  });
+
+  return ({
   isPlaying: false,
   isRecording: false,
   isLooping: false,
@@ -316,21 +327,33 @@ export const useDawStore = create<DAWState>((set, get) => ({
   setPlaying: (v) => {
     set({ isPlaying: v });
     if (v) {
-      audioEngine.play();
+      void audioEngine.play();
     } else {
       audioEngine.pause();
     }
   },
+  onBeat: (beat: number) => set({ currentBeat: beat }),
   setRecording: (v) => set({ isRecording: v }),
-  setLooping: (v) => set({ isLooping: v }),
+  setLooping: (v) => {
+    set({ isLooping: v });
+    const state = get();
+    audioEngine.setLooping(v, state.loopStart, state.loopEnd);
+  },
+
   setBpm: (v) => {
     get().pushUndo();
     set({ bpm: v });
     audioEngine.setBpm(v);
     // midiEffectsManager.setBpm(v);
   },
-  setCurrentBeat: (v) => set({ currentBeat: v }),
-  setMetronome: (v) => set({ metronomeOn: v }),
+  setCurrentBeat: (v) => {
+    set({ currentBeat: v });
+    audioEngine.seek(v);
+  },
+  setMetronome: (v) => {
+    set({ metronomeOn: v });
+    void audioEngine.setMetronome(v);
+  },
   setMasterVolume: (v) => {
     get().pushUndo();
     set({ masterVolume: v });
@@ -392,6 +415,25 @@ export const useDawStore = create<DAWState>((set, get) => ({
     set({
       tracks: get().tracks.map(t => t.id === id ? { ...t, effects: { ...t.effects, ...updates } } : t)
     });
+    // Forward to audio engine DSP chain
+    const track = get().tracks.find(t => t.id === id);
+    if (!track) return;
+    const fx = track.effects;
+    if (updates.eqLow !== undefined || updates.eqMid !== undefined || updates.eqHigh !== undefined) {
+      audioEngine.updateTrackEq(id, fx.eqLow, fx.eqMid, fx.eqHigh);
+    }
+    if (updates.reverbWet !== undefined) {
+      audioEngine.updateTrackReverbWet(id, fx.reverbWet);
+    }
+    if (updates.delayWet !== undefined) {
+      audioEngine.updateTrackDelayWet(id, fx.delayWet);
+    }
+    if (updates.compThreshold !== undefined || updates.compRatio !== undefined) {
+      audioEngine.updateTrackCompressor(id, fx.compThreshold, fx.compRatio);
+    }
+    if (updates.gain !== undefined) {
+      audioEngine.updateTrackGain(id, fx.gain);
+    }
   },
   // updateTrackMidiEffects: (id, updates) => set({
   //   tracks: get().tracks.map(t => t.id === id ? { ...t, midiEffects: { ...t.midiEffects, ...updates } } : t)
@@ -441,7 +483,7 @@ export const useDawStore = create<DAWState>((set, get) => ({
       tracks: get().tracks.map(t => t.id === trackId ? { ...t, clips: [...t.clips, newClip] } : t)
     });
 
-    audioEngine.scheduleClip(trackId, newClip.id, audioBuffer, 0);
+    void audioEngine.scheduleClip(trackId, newClip.id, audioBuffer, 0);
   },
   addAudioClipFromUrl: async (trackId, url, name) => {
     const res = await fetch(url);
@@ -464,7 +506,7 @@ export const useDawStore = create<DAWState>((set, get) => ({
       tracks: get().tracks.map(t => t.id === trackId ? { ...t, clips: [...t.clips, newClip] } : t)
     });
 
-    audioEngine.scheduleClip(trackId, newClip.id, audioBuffer, 0);
+    void audioEngine.scheduleClip(trackId, newClip.id, audioBuffer, 0);
   },
 
   pushUndo: () => {
@@ -576,4 +618,5 @@ export const useDawStore = create<DAWState>((set, get) => ({
     const newNotes = [...(clip.midiNotes || []), note];
     state.updateClip(clip.id, { midiNotes: newNotes });
   },
-}));
+  });
+});

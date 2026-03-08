@@ -1,4 +1,3 @@
-import React from 'react';
 import { Track, useDawStore } from '../store/dawStore';
 import Clip from './Clip';
 import { cn } from '../utils/cn';
@@ -22,7 +21,9 @@ function TrackLane({ track }: TrackLaneProps) {
         onClick={() => selectTrack(track.id)}
         className={cn(
           'w-48 p-4 h-full flex flex-col justify-center text-left transition-colors rounded-l-xl border border-white/10',
-          isSelected ? 'bg-[var(--accent)]/20 ring-2 ring-[var(--accent)]' : 'bg-black/25 hover:bg-white/5'
+          isSelected
+            ? 'bg-[var(--accent)]/20 ring-2 ring-[var(--accent)]'
+            : 'bg-black/25 hover:bg-white/5'
         )}
       >
         <p className="font-display font-semibold text-white">{track.name}</p>

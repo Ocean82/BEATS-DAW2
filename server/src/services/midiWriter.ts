@@ -18,6 +18,8 @@ export interface MidiProject {
   timeSignatureNum: number;
   timeSignatureDen: number;
   totalBeats: number;
+  /** Optional sequence/track name written as MIDI meta 0xFF 0x03. Defaults to "BEATS-DAW Export". */
+  title?: string;
 }
 
 function writeVarLen(value: number): number[] {
@@ -59,7 +61,9 @@ export async function writeMidiFile(project: MidiProject, outputPath: string): P
 
   const events: { tick: number; data: number[] }[] = [];
 
-  events.push({ tick: 0, data: [0xFF, 0x03, 9, 84] }); // Title placeholder
+  const title = (project.title ?? 'BEATS-DAW Export').slice(0, 0x7F);
+  const titleBytes = [...Buffer.from(title, 'utf8')];
+  events.push({ tick: 0, data: [0xFF, 0x03, ...writeVarLen(titleBytes.length), ...titleBytes] });
   events.push({ tick: 0, data: setTempo(bpm) });
   events.push({ tick: 0, data: timeSignature(timeSignatureNum, timeSignatureDen) });
 

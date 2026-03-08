@@ -8,9 +8,11 @@ import { appLogger } from '../logger.js';
 
 const router = Router();
 
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+
 // Local file upload handling
 const upload = multer({
-  dest: 'uploads/',
+  dest: UPLOADS_DIR + path.sep,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
   fileFilter: (req, file, cb) => {
     const allowed = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac'];
@@ -53,7 +55,8 @@ router.post('/split', upload.single('file'), async (req, res) => {
 
     const response = await fetch(`${PYTHON_SERVICE_URL}/split`, {
       method: 'POST',
-      body: formData as unknown as BodyInit,
+      // node-fetch accepts form-data; type assertion for lib vs node-fetch BodyInit mismatch
+      body: formData as Parameters<typeof fetch>[1] extends { body?: infer B } ? B : never,
     });
 
     // Clean up uploaded file
@@ -86,10 +89,13 @@ router.post('/split', upload.single('file'), async (req, res) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     appLogger.errorStack('Stem split error', error instanceof Error ? error : new Error(message));
-    res.status(500).json({
-      error: 'Failed to split stems',
+    const isUnreachable =
+      typeof message === 'string' &&
+      (message.includes('ECONNREFUSED') || message.includes('ENOTFOUND') || message.includes('fetch failed') || message.includes('network'));
+    res.status(isUnreachable ? 503 : 500).json({
+      error: isUnreachable ? 'Stem service unavailable' : 'Failed to split stems',
       details: message,
-      hint: 'Make sure Python service is running: cd server && python python_service/stem_splitter.py'
+      hint: 'Start the Python stem service: cd server && source venv/bin/activate && python python_service/stem_splitter.py (WSL) or venv\\Scripts\\activate && python python_service/stem_splitter.py (Windows)'
     });
   }
 });

@@ -75,7 +75,7 @@ class MockUAL {
   }
 
   private mapDawStateToUIState(dawState: { tracks: Track[] }): UIState {
-    // In a real UAL, this would be a more sophisticated mapping.
+    // summary, tradeoffs, mastering_status, confidence are placeholders until a real agent/backend provides them.
     return {
       summary: 'Ready',
       tradeoffs: [],

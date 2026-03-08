@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '../utils/cn';
 
 const ALLOWED_AUDIO = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac'];
@@ -51,7 +51,17 @@ function SplitConsole({
   onSelectedStemIdsChange,
 }: SplitConsoleProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [stemServiceReady, setStemServiceReady] = useState<boolean | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/stems/health')
+      .then((r) => (cancelled ? undefined : r.ok))
+      .then((ok) => { if (!cancelled) setStemServiceReady(ok ?? false); })
+      .catch(() => { if (!cancelled) setStemServiceReady(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -128,6 +138,8 @@ function SplitConsole({
           type="file"
           accept={ALLOWED_AUDIO.join(',')}
           className="hidden"
+          aria-label="Choose audio file to split into stems"
+          title="Choose audio file to split into stems"
           onChange={(e) => {
             const f = e.target.files?.[0];
             onSplitFileChange(f ?? null);
@@ -193,6 +205,11 @@ function SplitConsole({
               </>
             )}
 
+            {stemServiceReady === false && (
+              <p className="text-xs text-amber-400/90">
+                Stem service not running — start Python: <code className="rounded bg-white/10 px-1">cd server &amp;&amp; source venv/bin/activate &amp;&amp; python python_service/stem_splitter.py</code>
+              </p>
+            )}
             <button
               type="button"
               disabled={!splitFile || splitStatus === 'loading'}
@@ -202,7 +219,7 @@ function SplitConsole({
               {splitStatus === 'loading' ? 'Splitting stems…' : 'Split and Generate Stem Rack'}
             </button>
             {splitStatus === 'error' && splitError && (
-              <p className="text-sm text-red-400">{splitError}</p>
+              <p className="text-sm text-red-400 whitespace-pre-wrap break-words">{splitError}</p>
             )}
           </div>
         </div>

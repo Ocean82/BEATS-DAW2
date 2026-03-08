@@ -3,8 +3,15 @@ import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  convertNotesToMidiTracks,
+  writeMidiFile,
+  type MidiProject,
+} from './midiWriter.js';
 
 const execAsync = promisify(exec);
+
+const hasS3 = !!(process.env.R2_ENDPOINT && process.env.R2_ACCESS_KEY && process.env.R2_SECRET_KEY);
 
 const s3 = new S3Client({
   region: 'auto',
@@ -58,6 +65,15 @@ async function ensureDir(dir: string) {
 }
 
 async function uploadToS3(localPath: string, key: string): Promise<string> {
+  // If S3 is not configured, save locally
+  if (!hasS3) {
+    const localDir = path.join(process.cwd(), 'exports');
+    await fs.mkdir(localDir, { recursive: true });
+    const localDest = path.join(localDir, `${key}.wav`);
+    await fs.copyFile(localPath, localDest);
+    return `/api/export/download/${path.basename(localDest)}`;
+  }
+  
   const fileBuffer = await fs.readFile(localPath);
   await s3.send(
     new PutObjectCommand({
@@ -83,10 +99,9 @@ export async function renderProject(
 
   console.log(`Starting render job ${jobId} for ${duration}s`);
 
+  type MidiTrackInput = Parameters<typeof convertNotesToMidiTracks>[0];
   const midiTracks = convertNotesToMidiTracks(
-    projectData.tracks,
-    projectData.bpm,
-    projectData.currentBeat || 32
+    projectData.tracks as unknown as MidiTrackInput
   );
   const audioClips: {
     trackIndex: number;
@@ -115,8 +130,7 @@ export async function renderProject(
           const response = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
 
           if (response.Body) {
-            const stream = response.Body as NodeJS.ReadableStream;
-            NodeJS.ReadableStream;
+            const stream = response.Body as AsyncIterable<Buffer>;
             const chunks: Buffer[] = [];
             for await (const chunk of stream) {
               chunks.push(chunk as Buffer);

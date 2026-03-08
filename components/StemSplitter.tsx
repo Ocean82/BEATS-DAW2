@@ -42,7 +42,7 @@ function StemSplitter() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
+    const { files } = e.dataTransfer;
     if (files?.length > 0 && tracks.length > 0) {
       console.log('Track ID:', tracks[0].id);
       addAudioClip(tracks[0].id, files[0]);
@@ -113,7 +113,7 @@ function StemSplitter() {
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           onChange={(e) => {
             const files = e.target.files;
-            if (files?.length > 0 && tracks.length > 0) {
+            if (files && files.length > 0 && tracks.length > 0) {
               addAudioClip(tracks[0].id, files[0]);
             }
           }}
@@ -150,8 +150,12 @@ function StemSplitter() {
               aria-label="Audio file for stem split"
               className="text-sm text-text-muted file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-white"
               onChange={(e) => {
-                const f = e.target.files?.[0];
-                setSplitFile(f ?? null);
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  setSplitFile(files[0]);
+                } else {
+                  setSplitFile(null);
+                }
                 setSplitError(null);
               }}
             />

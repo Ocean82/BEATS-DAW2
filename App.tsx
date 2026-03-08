@@ -75,12 +75,12 @@ function App() {
       formData.append('quality', 'high');
 
       const res = await fetch('/api/stems/split', { method: 'POST', body: formData });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; details?: string; hint?: string; stems?: StemItem[] };
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? `Split failed: ${res.status}`);
+        const msg = [data.error ?? `Split failed: ${res.status}`, data.details, data.hint].filter(Boolean).join(' — ');
+        throw new Error(msg);
       }
 
-      const data = (await res.json()) as { stems: StemItem[] };
       const newStems = data.stems ?? [];
       setStems(newStems);
       setUploadName(splitFile.name);

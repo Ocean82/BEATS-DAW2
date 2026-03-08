@@ -29,7 +29,7 @@ function EffectsPanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`eq-low-${tid}`}>EQ Low</label>
+            <label htmlFor={`eq-low-${tid}`}>EQ Low</label>
             <span>{effects.eqLow} dB</span>
           </div>
           <input
@@ -40,7 +40,6 @@ function EffectsPanel() {
             step="0.5"
             value={effects.eqLow}
             className="burn-slider"
-            aria-labelledby={`eq-low-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, { eqLow: parseFloat(e.target.value) })
             }
@@ -48,7 +47,7 @@ function EffectsPanel() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`eq-mid-${tid}`}>EQ Mid</label>
+            <label htmlFor={`eq-mid-${tid}`}>EQ Mid</label>
             <span>{effects.eqMid} dB</span>
           </div>
           <input
@@ -59,7 +58,6 @@ function EffectsPanel() {
             step="0.5"
             value={effects.eqMid}
             className="burn-slider"
-            aria-labelledby={`eq-mid-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, { eqMid: parseFloat(e.target.value) })
             }
@@ -67,7 +65,7 @@ function EffectsPanel() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`eq-high-${tid}`}>EQ High</label>
+            <label htmlFor={`eq-high-${tid}`}>EQ High</label>
             <span>{effects.eqHigh} dB</span>
           </div>
           <input
@@ -78,7 +76,6 @@ function EffectsPanel() {
             step="0.5"
             value={effects.eqHigh}
             className="burn-slider"
-            aria-labelledby={`eq-high-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, { eqHigh: parseFloat(e.target.value) })
             }
@@ -86,7 +83,7 @@ function EffectsPanel() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`reverb-${tid}`}>Reverb</label>
+            <label htmlFor={`reverb-${tid}`}>Reverb</label>
             <span>{Math.round(effects.reverbWet * 100)}%</span>
           </div>
           <input
@@ -97,7 +94,6 @@ function EffectsPanel() {
             step="0.01"
             value={effects.reverbWet}
             className="burn-slider"
-            aria-labelledby={`reverb-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, { reverbWet: parseFloat(e.target.value) })
             }
@@ -105,7 +101,7 @@ function EffectsPanel() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`delay-${tid}`}>Delay</label>
+            <label htmlFor={`delay-${tid}`}>Delay</label>
             <span>{Math.round(effects.delayWet * 100)}%</span>
           </div>
           <input
@@ -116,7 +112,6 @@ function EffectsPanel() {
             step="0.01"
             value={effects.delayWet}
             className="burn-slider"
-            aria-labelledby={`delay-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, { delayWet: parseFloat(e.target.value) })
             }
@@ -124,7 +119,7 @@ function EffectsPanel() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`comp-thresh-${tid}`}>Comp Thresh</label>
+            <label htmlFor={`comp-thresh-${tid}`}>Comp Thresh</label>
             <span>{effects.compThreshold} dB</span>
           </div>
           <input
@@ -135,7 +130,6 @@ function EffectsPanel() {
             step="1"
             value={effects.compThreshold}
             className="burn-slider"
-            aria-labelledby={`comp-thresh-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, {
                 compThreshold: parseFloat(e.target.value),
@@ -145,7 +139,7 @@ function EffectsPanel() {
         </div>
         <div>
           <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/42">
-            <label id={`comp-ratio-${tid}`}>Comp Ratio</label>
+            <label htmlFor={`comp-ratio-${tid}`}>Comp Ratio</label>
             <span>{effects.compRatio}:1</span>
           </div>
           <input
@@ -156,7 +150,6 @@ function EffectsPanel() {
             step="0.5"
             value={effects.compRatio}
             className="burn-slider"
-            aria-labelledby={`comp-ratio-${tid}`}
             onChange={(e) =>
               updateTrackEffects(track.id, {
                 compRatio: parseFloat(e.target.value),

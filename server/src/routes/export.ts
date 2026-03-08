@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { renderProject } from '../services/audioRenderer.js';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 
@@ -26,6 +28,20 @@ router.post('/render', async (req, res) => {
   } catch (error) {
     console.error('Render error:', error);
     res.status(500).json({ error: 'Failed to render audio' });
+  }
+});
+
+router.get('/download/:filename', async (req, res) => {
+  try {
+    const exportPath = path.join(process.cwd(), 'exports', req.params.filename);
+    if (!fs.existsSync(exportPath)) {
+      return res.status(404).json({ error: 'Export not found' });
+    }
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Content-Disposition', `attachment; filename="${req.params.filename}"`);
+    fs.createReadStream(exportPath).pipe(res);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to download export' });
   }
 });
 

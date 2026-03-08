@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 import { fileRouter } from './routes/files.js';
 import { projectRouter } from './routes/projects.js';
@@ -12,6 +14,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+const uploadsDir = path.join(process.cwd(), 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true });
 
 app.use(helmet());
 app.use(cors());
@@ -27,7 +32,7 @@ app.use('/api/projects', projectRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/stems', stemRouter);
 
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response) => {
   appLogger.errorStack('Unhandled error', err);
   res.status(500).json({ error: 'Internal server error' });
 });
