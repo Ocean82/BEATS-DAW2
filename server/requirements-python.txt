@@ -1,0 +1,19 @@
+# Stem Separation
+demucs==4.0.1
+torch>=2.1.0,<2.5
+torchaudio>=2.1.0,<2.5
+
+# ONNX (Stage 1 vocal extraction, CPU-only)
+onnxruntime>=1.16.0,<2.0
+
+# Audio Processing
+soundfile==0.13.1
+librosa==0.11.0
+numpy==1.26.4
+scipy==1.17.1
+
+# API & Utils
+flask==3.0.0
+flask-cors==4.0.0
+python-dotenv==1.0.0
+PyYAML>=6.0

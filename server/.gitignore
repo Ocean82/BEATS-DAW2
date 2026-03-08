@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+logs/
+uploads/
+stems_output/
+venv/
+__pycache__/
+*.pyc
+.DS_Store

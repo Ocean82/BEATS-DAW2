@@ -1,0 +1,12 @@
+{"name":"beats-daw-backend","version":"1.0.0","type":"module","scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "python": "python python_service/stem_splitter.py",
+    "dev:all": "concurrently \"npm run dev\" \"npm run python\"",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "test": "bash ../scripts/run-tests.sh",
+    "test:setup": "bash ../scripts/test-setup.sh",
+    "test:health": "bash ../scripts/run-tests.sh --health"
+  },"dependencies":{"@aws-sdk/client-s3":"^3.400.0","@aws-sdk/s3-request-presigner":"^3.400.0","@prisma/client":"^5.0.0","bullmq":"^5.0.0","cors":"^2.8.5","dotenv":"^16.0.0","express":"^4.18.0","form-data":"^4.0.0","helmet":"^7.0.0","ioredis":"^5.3.0","midi-file":"^1.2.4","multer":"^1.4.5-lts.1","node-fetch":"^3.3.0","uuid":"^9.0.0"},"devDependencies":{"@types/cors":"^2.8.0","@types/express":"^4.17.0","@types/multer":"^1.4.0","@types/node":"^20.0.0","@types/node-fetch":"^2.6.11","@types/uuid":"^9.0.0","concurrently":"^8.2.0","prisma":"^5.0.0","tsx":"^4.0.0","typescript":"^5.0.0"}}

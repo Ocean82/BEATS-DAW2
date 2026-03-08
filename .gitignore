@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.local
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Logs and temp
+*.log
+logs/
+npm-debug.log*
+ts_errors.txt
+
+# Test and tooling
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+nul
+*.swp
+*.swo
+
+# Python (server)
+server/venv/
+server/__pycache__/
+server/**/__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Server-specific (keep in sync with server/.gitignore where needed)
+server/uploads/
+server/stems_output/
+
+# Large model files (binaries); obtain separately or document in README
+models/
